@@ -1,0 +1,139 @@
+---
+title: "bvar_pics"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(BMR)
+
+
+#IN LEVELS, BIG BVAR
+
+data_q <- read.csv("data_q_sa.csv")[,-1]
+data_m <- read.csv("data_m_sa.csv")[,-1]
+
+
+#Norm for better convergence
+for(d in 2:ncol(data_q)){
+  data_q[,d] <- (data_q[,d] - mean(data_q[,d]))/sd(data_q[,d])
+}
+
+for(d in 2:ncol(data_m)){
+  data_m[,d] <- (data_m[,d] - mean(data_m[,d]))/sd(data_m[,d])
+}
+
+```
+
+Немного квартальных моделей, бвар с 4 лагами (pic_q_4l):
+
+
+```{r, echo = FALSE}
+
+dd <- data.frame(GDP = data_q$GDP_2011, Ex = data_q$Ex_2011, Im = data_q$Im_2011, Brent = data_q$Brent, 
+                 IPC = data_q$IPC, Bout = data_q$Budget_out_r)
+
+bvarm <- BVARM(dd,
+               p=4, constant=T, irf.periods=20,
+               keep=10000, burnin=5000, VType=1)
+#plot(bvarm,save=F)
+IRF(bvarm,save=T)
+
+```
+
+Поменьше лагов: 2 (pic_q_2l):
+
+```{r, echo = FALSE}
+
+dd <- data.frame(GDP = data_q$GDP_2011, Ex = data_q$Ex_2011, Im = data_q$Im_2011, Brent = data_q$Brent, 
+                 IPC = data_q$IPC, Bout = data_q$Budget_out_r)
+
+bvarm <- BVARM(dd,
+               p=2, constant=T, irf.periods=20,
+               keep=10000, burnin=5000, VType=1)
+#plot(bvarm,save=F)
+IRF(bvarm,save=F)
+
+```
+
+
+Пример на месячных данных, 4 же лага (pic_m_4l)
+
+```{r, echo = FALSE}
+
+#M
+
+dd <- data.frame(Brent = data_m$Brent, Kurs = data_m$USD_RUR, Construct = data_m$Construction_real_index, 
+                 IPC = data_m$IPC, B_in = data_m$Budget_in, B_out = data_m$Budget_out)
+
+bvarm <- BVARM(dd,
+               p=4, constant=T, irf.periods=20,
+               keep=10000, burnin=5000, VType=1)
+#plot(bvarm,save=F)
+IRF(bvarm,save=F)
+
+
+```
+
+Опять же 2 лага (pic_m_2l)
+
+```{r, echo = FALSE}
+
+#M
+
+dd <- data.frame(Brent = data_m$Brent, Kurs = data_m$USD_RUR, Construct = data_m$Construction_real_index, 
+                 IPC = data_m$IPC, B_in = data_m$Budget_in, B_out = data_m$Budget_out)
+
+bvarm <- BVARM(dd,
+               p=2, constant=T, irf.periods=20,
+               keep=10000, burnin=5000, VType=1)
+#plot(bvarm,save=F)
+IRF(bvarm,save=F)
+
+
+```
+
+Надо хорошенько обсудить наборы переменных!!!
+
+
+
+Модельки помельче (Антон, тут я взял твой код из сваров и приделал к нему бвары). Тут 4 лага, уровни (pic_A_level)
+
+```{r, echo = FALSE}
+
+data_q <- read.csv("dataFin_q.csv")[,-1]
+dat <- data_q[,c(1,2,3,9)]
+names(dat) <- c("y", "t", "g", "oil")
+dat <- log(dat)
+dat <- ts(dat, start = 2003.75, freq = 4)
+plot(dat[,1:4])
+exog <- dat[,4]
+names(exog) <- names(dat)[,4]
+
+bvarm <- BVARM(dat,
+               p=4, constant=T, irf.periods=20,
+               keep=10000, burnin=5000, VType=1)
+
+IRF(bvarm,save=F)
+
+
+```
+
+
+И оно же в разностях (pic_A_diff)
+
+```{r, echo = FALSE}
+data_q <- read.csv("dataFin_q.csv")[,-1]
+dat <- data_q[,c(1,2,3,9)]
+names(dat) <- c("y", "t", "g", "oil")
+dat <- (dat[2:54,]-dat[1:53,])/dat[1:53,]*100
+dat <- ts(dat, start = 2004, freq = 4)
+plot(dat[,1:4])
+exog <- dat[,4]
+names(exog) <- names(dat)[,4]
+
+bvarm <- BVARM(dat,
+               p=4, constant=T, irf.periods=20,
+               keep=10000, burnin=5000, VType=1)
+
+IRF(bvarm,save=F)
+```
